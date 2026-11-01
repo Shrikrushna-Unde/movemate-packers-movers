@@ -8,7 +8,7 @@ import { formatCurrency, formatCurrencyExact, formatDate } from '../../utils/for
  * Renders the itemised quote returned by POST /quotes/estimate.
  *
  * The whole point of this panel is that the customer can see HOW the number was reached. Each
- * line carries the backend's own `explanation` string - "130 km beyond the free 20 km at 24 per
+ * line carries the backend's own `explanation` string - "125 km beyond the free 25 km at 21 per
  * km" - so the price is auditable rather than a mystery. In an industry known for surprise
  * charges at delivery, that transparency is the product.
  *

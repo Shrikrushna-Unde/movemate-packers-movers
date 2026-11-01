@@ -366,7 +366,7 @@ export default function GetQuote() {
                 onChange={handleChange}
                 required
                 error={fieldErrors.distanceKm}
-                hint="First 20 km are included in the base charge"
+                hint="First 25 km are included in the base charge"
               />
 
               <Input

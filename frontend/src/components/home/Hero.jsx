@@ -96,7 +96,7 @@ export default function Hero() {
               <p className="text-sm leading-relaxed text-slate-300">
                 <span className="font-semibold text-white">How the quote works:</span> our pricing
                 engine starts from your home size and move type, adds only the distance beyond the
-                first 20 km, then packing, staircase access, insurance and storage - and shows GST
+                first 25 km, then packing, staircase access, insurance and storage - and shows GST
                 as its own line.
               </p>
             </div>
