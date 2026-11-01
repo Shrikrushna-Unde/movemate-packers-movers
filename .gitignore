@@ -1,0 +1,42 @@
+# ---- Java / Maven ----
+target/
+*.class
+*.jar
+!**/src/main/**/*.jar
+.mvn/wrapper/maven-wrapper.jar
+
+# ---- Node / Vite ----
+node_modules/
+dist/
+dist-ssr/
+.vite/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Secrets: never commit real credentials ----
+.env
+.env.local
+.env.production
+*.pem
+
+# Local Spring profile holding real database credentials.
+# The committed template is application-local.properties.example.
+application-local.properties
+
+# Scratch file used once during setup to hand over the Railway connection string.
+railway-url.txt
+
+# ---- IDE ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# ---- OS ----
+.DS_Store
+Thumbs.db

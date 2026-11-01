@@ -1,0 +1,93 @@
+/*
+ * Global stylesheet.
+ *
+ * The three @tailwind directives are placeholders that PostCSS replaces at build time:
+ *   base       - Tailwind's CSS reset (Preflight): removes default margins, makes images
+ *                block-level, unstyles headings. It is why a Tailwind page looks identical in
+ *                Chrome, Safari and Firefox.
+ *   components - where @apply-based component classes land (our .btn, .card below).
+ *   utilities  - every utility class (p-4, flex, text-lg) that the content scan found.
+ *
+ * Order matters: utilities must come last so that a utility on an element can override a
+ * component class. That is CSS specificity, not magic.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    /* Makes in-page anchor links glide instead of jumping. */
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 font-sans text-slate-700 antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-semibold text-slate-900;
+  }
+
+  /*
+   * A visible focus ring on keyboard navigation only. :focus-visible (not :focus) means mouse
+   * users do not see a ring on every click, while keyboard and screen-reader users keep the
+   * indicator they depend on. Removing focus outlines entirely is one of the most common
+   * accessibility failures on the web.
+   */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2;
+  }
+}
+
+@layer components {
+  /*
+   * @apply lets us name a repeated utility combination once. Used sparingly - the moment a
+   * component needs variants or state, a React component is the better abstraction, which is
+   * why Button lives in JSX and only these truly global primitives live here.
+   */
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .card {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-card;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+
+  .input-base {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900
+      placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2
+      focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:bg-slate-100;
+  }
+
+  .input-error {
+    @apply border-red-400 focus:border-red-500 focus:ring-red-500/20;
+  }
+
+  /* Hides an element visually but keeps it readable by screen readers. */
+  .sr-only-focusable:not(:focus) {
+    @apply sr-only;
+  }
+}
+
+/*
+ * Hides the little spinner arrows on number inputs. On a quote form those arrows invite
+ * clicking a distance up one kilometre at a time, which nobody wants to do to reach 450.
+ */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

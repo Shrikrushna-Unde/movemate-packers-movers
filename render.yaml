@@ -1,0 +1,82 @@
+# ===================================================================
+#  Render Blueprint (infrastructure as code)
+#
+#  Render reads this file from the repository root and provisions everything in it.
+#
+#  IMPORTANT, and the first thing to know before you deploy:
+#  Render does NOT offer managed MySQL - only PostgreSQL. Since this project uses MySQL
+#  (as required), there are three options:
+#
+#    A. Backend + MySQL both on Railway        <- simplest, recommended, see docs/04-DEPLOYMENT.md
+#    B. Backend on Render + MySQL on a free external host
+#       (Aiven, Clever Cloud, Railway's MySQL add-on), with DB_URL pointing at it
+#    C. Switch the project to PostgreSQL (swap the JDBC driver, the Flyway module and a
+#       handful of column types) and use Render end to end
+#
+#  This blueprint implements option B: Render runs the API and the static site, and the
+#  database lives elsewhere. The DB_* values are marked sync:false, so Render prompts you for
+#  them at deploy time instead of them being committed to git.
+# ===================================================================
+
+services:
+  # ---------------- Spring Boot API ----------------
+  - type: web
+    name: movemate-api
+    runtime: docker
+    # Where the Dockerfile lives and what it can see. rootDir scopes the build context to
+    # backend/, so the frontend's node_modules never enters the Docker build.
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    # Render polls this URL and marks the deploy failed if it never returns 200. This is why
+    # spring-boot-starter-actuator is a dependency rather than a nice-to-have.
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # Render injects PORT itself; application.properties reads it via ${PORT:8080}.
+      - key: DB_URL
+        sync: false # prompted at deploy: jdbc:mysql://host:3306/movemate?useSSL=true...
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # generateValue tells Render to create a strong random value once and keep it. Far better
+      # than committing a secret, and better than one you invented by hand.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # e.g. https://movemate-web.onrender.com
+
+  # ---------------- React frontend ----------------
+  - type: web
+    name: movemate-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    # The SPA fallback. Without it, refreshing on /services returns Render's 404 because there
+    # is no file at that path - index.html must be served so React Router can route.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Vite inlines this at BUILD time, so changing it requires a rebuild, not a restart.
+      - key: VITE_API_BASE_URL
+        sync: false # https://movemate-api.onrender.com/api/v1
+      # Also build-time. Set these or the site ships with the placeholder number, and the
+      # WhatsApp button dead-ends on a number nobody owns.
+      - key: VITE_CONTACT_PHONE
+        sync: false # full international form, e.g. +919876543210
+      - key: VITE_CONTACT_EMAIL
+        sync: false
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

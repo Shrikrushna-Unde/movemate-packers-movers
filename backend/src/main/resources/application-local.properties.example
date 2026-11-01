@@ -1,0 +1,44 @@
+# ===================================================================
+#  TEMPLATE - copy this file to `application-local.properties` in the
+#  same folder, then paste your real Railway values into it.
+#
+#  `application-local.properties` is gitignored, so your database
+#  password never gets committed. This .example file IS committed, so
+#  anyone cloning the repo knows which values they need to supply.
+#  That split - a committed template plus an ignored real file - is the
+#  standard way to handle local credentials.
+#
+#  Run the backend against it with:
+#      mvn spring-boot:run -Dspring-boot.run.profiles=local
+# ===================================================================
+
+# -------------------------------------------------------------------
+#  Where to find these values
+# -------------------------------------------------------------------
+#  Railway dashboard -> your MySQL service -> "Variables" tab.
+#  Look for MYSQL_PUBLIC_URL (NOT MYSQL_URL). It looks like:
+#
+#      mysql://root:AbCdEf123456@maglev.proxy.rlwy.net:43215/railway
+#             └──┘ └───────────┘ └──────────────────┘ └───┘ └─────┘
+#             user   password          host           port   database
+#
+#  You need the PUBLIC url because your laptop is outside Railway's
+#  private network. MYSQL_URL points at `mysql.railway.internal`, which
+#  only resolves from inside a Railway service - using it from your
+#  machine fails with "unknown host".
+# -------------------------------------------------------------------
+
+# Rebuild the JDBC URL from the host, port and database above.
+# Keep the query parameters exactly as they are:
+#   allowPublicKeyRetrieval=true  needed for MySQL 8's default auth plugin
+#   useSSL=true                   the connection crosses the public internet
+#   serverTimezone=UTC            stops MySQL guessing your JVM's timezone
+spring.datasource.url=jdbc:mysql://HOST:PORT/DATABASE?allowPublicKeyRetrieval=true&useSSL=true&serverTimezone=UTC
+
+spring.datasource.username=root
+spring.datasource.password=PASTE_YOUR_PASSWORD_HERE
+
+# A remote database has real network latency, so give the pool longer to
+# establish a connection than the local default allows.
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.maximum-pool-size=5

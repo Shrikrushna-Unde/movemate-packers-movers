@@ -1,0 +1,10 @@
+# Files that must never enter the Docker build context.
+# Everything listed here is either rebuilt inside the image or is a secret.
+target/
+.idea/
+*.iml
+*.log
+.env
+.git/
+.gitignore
+README.md

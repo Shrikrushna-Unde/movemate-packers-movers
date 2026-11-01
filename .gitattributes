@@ -1,0 +1,15 @@
+# Normalise line endings so the repository always stores LF, regardless of the
+# machine that committed. Without this, a Windows checkout commits CRLF and a
+# Linux CI build sees every line as changed - and a shell script with CRLF
+# endings fails inside a Docker image with "bad interpreter: /bin/sh^M".
+* text=auto eol=lf
+
+# Binary files git must never try to normalise.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.jar binary
+*.woff binary
+*.woff2 binary

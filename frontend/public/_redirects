@@ -1,0 +1,8 @@
+#  Single-page-app fallback.
+#
+#  Files in public/ are copied verbatim into dist/ by Vite, so this ends up at the root of the
+#  deployed site. Netlify and Render Static Sites both read it.
+#
+#  Meaning: serve index.html for any path that is not a real file, with HTTP 200 so the URL in
+#  the address bar is preserved for React Router to read.
+/*    /index.html   200

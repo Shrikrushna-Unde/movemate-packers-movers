@@ -1,0 +1,72 @@
+# ===================================================================
+#  Local development stack: MySQL + the Spring Boot API.
+#
+#  Why this file exists: it is the fastest way to get a working database without installing
+#  MySQL on your machine. One command and you have MySQL 8 on port 3306 with the schema
+#  created, the catalogue seeded and the admin account ready.
+#
+#    docker compose up -d           start MySQL and the API in the background
+#    docker compose logs -f api     follow the API logs
+#    docker compose down            stop everything (data survives, see the volume below)
+#    docker compose down -v         stop AND delete the database volume - a clean slate
+#
+#  To run only the database and start the API from your IDE instead (the usual development
+#  loop, because IDE hot reload beats rebuilding a container):
+#
+#    docker compose up -d mysql
+# ===================================================================
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: movemate-mysql
+    # Always restart unless you stopped it yourself - survives a laptop reboot.
+    restart: unless-stopped
+    environment:
+      # Dev-only credentials. Real deployments inject these as platform secrets.
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: movemate
+    ports:
+      # host:container. Mapping to 3306 means your IDE and MySQL Workbench connect to
+      # localhost:3306 exactly as they would with a native install.
+      - '3306:3306'
+    volumes:
+      # A NAMED volume, so the data outlives the container. Without this, every
+      # `docker compose down` would wipe your bookings - which is occasionally what you want
+      # (use `down -v`) and usually infuriating.
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      # The API must not start before MySQL is accepting connections, or Flyway fails and the
+      # container exits. This probe is what makes `depends_on: condition: service_healthy`
+      # meaningful - plain `depends_on` only waits for the container to START, not to be READY,
+      # which is a classic Docker Compose trap.
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-proot']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: movemate-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # `mysql` is the SERVICE NAME, which Docker's internal DNS resolves to the container.
+      # localhost would not work here - inside the api container, localhost is the api itself.
+      DB_URL: jdbc:mysql://mysql:3306/movemate?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      JWT_SECRET: local-docker-dev-secret-key-change-me-in-production-0123456789
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:4173
+      ADMIN_EMAIL: admin@movemate.in
+      ADMIN_PASSWORD: Admin@123
+    ports:
+      - '8080:8080'
+
+volumes:
+  mysql_data:
