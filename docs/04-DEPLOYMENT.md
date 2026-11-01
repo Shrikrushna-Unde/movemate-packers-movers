@@ -37,16 +37,18 @@ That must print **nothing**. `.env`, `target/` and `node_modules/` are all ignor
 ### Generate a JWT secret
 
 HS256 needs at least 32 bytes. Generate one and keep it somewhere safe — you will paste it into
-Railway, not into a file:
+your hosting dashboard, not into a file:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
-No Node yet? PowerShell works too:
+No Node yet? PowerShell works too. Note `RandomNumberGenerator`, not `Get-Random`: the latter
+is a deterministic PRNG seeded from the system clock, so a signing key made with it is
+guessable by anyone who knows roughly when you generated it.
 
 ```powershell
-[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Max 256 }))
+$b = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b).Replace("+","-").Replace("/","_").TrimEnd("=")
 ```
 
 ---
