@@ -120,10 +120,21 @@ export default function Login() {
           Demo accounts for reviewers
         </p>
         <dl className="mt-3 space-y-1.5 text-xs text-slate-600">
-          <div className="flex justify-between gap-4">
-            <dt>Admin</dt>
-            <dd className="font-mono">admin@movemate.in / Admin@123</dd>
-          </div>
+          {/*
+            The admin password is only shown in development. In production it comes from the
+            ADMIN_PASSWORD environment variable, so printing the local default here would
+            advertise a password that does not work - worse than showing nothing, because the
+            reviewer concludes the site is broken rather than that the account is restricted.
+            `import.meta.env.DEV` is a Vite built-in: true under `npm run dev`, and statically
+            replaced with `false` in a production build, so the whole branch is tree-shaken out
+            and the string never reaches the deployed bundle.
+          */}
+          {import.meta.env.DEV && (
+            <div className="flex justify-between gap-4">
+              <dt>Admin</dt>
+              <dd className="font-mono">admin@movemate.in / Admin@123</dd>
+            </div>
+          )}
           <div className="flex justify-between gap-4">
             <dt>Customer</dt>
             <dd className="font-mono">customer@movemate.in / Customer@123</dd>
