@@ -30,23 +30,31 @@ model — the two things that are actually hard about this business domain.
 
 ---
 
-## Live links (fill these in after deploying)
+## Live links
 
 | | URL |
 |---|---|
-| Website | `https://movemate-web.vercel.app` |
-| API (Swagger UI) | `https://movemate-api.up.railway.app/swagger-ui.html` |
-| Health check | `https://movemate-api.up.railway.app/actuator/health` |
+| **Website** | https://movemate-india.onrender.com |
+| API (Swagger UI) | https://movemate-api-y3s9.onrender.com/swagger-ui.html |
+| Health check | https://movemate-api-y3s9.onrender.com/actuator/health |
+
+> **First load may take up to a minute.** The API runs on Render's free tier, which spins
+> the container down after 15 minutes of inactivity. The page appears immediately; the
+> services and prices fill in once the backend has woken up.
 
 ### Demo accounts
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@movemate.in` | `Admin@123` |
+| Admin | `admin@movemate.in` | `Admin@123` *(local only)* |
 | Customer | `customer@movemate.in` | `Customer@123` |
 
-> These are seeded on first startup by [`DataSeeder`](backend/src/main/java/com/movemate/config/DataSeeder.java).
-> In production, override them with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` environment variables.
+> Seeded on first startup by [`DataSeeder`](backend/src/main/java/com/movemate/config/DataSeeder.java).
+> The **customer** login above works on the live site, so you can see the dashboard without
+> signing up. The **admin** password is NOT `Admin@123` on the live site - it is overridden
+> there via the `ADMIN_PASSWORD` environment variable, which is the whole point of reading it
+> from config rather than hardcoding it.
+
 
 ---
 
