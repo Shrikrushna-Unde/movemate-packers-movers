@@ -51,11 +51,11 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
       - key: CORS_ALLOWED_ORIGINS
-        sync: false # e.g. https://movemate-web.onrender.com
+        sync: false # the frontend origin, no trailing slash: https://movemate-india.onrender.com
 
   # ---------------- React frontend ----------------
   - type: web
-    name: movemate-web
+    name: movemate-india
     runtime: static
     rootDir: frontend
     buildCommand: npm ci && npm run build
@@ -69,7 +69,7 @@ services:
     envVars:
       # Vite inlines this at BUILD time, so changing it requires a rebuild, not a restart.
       - key: VITE_API_BASE_URL
-        sync: false # https://movemate-api.onrender.com/api/v1
+        sync: false # https://movemate-api-y3s9.onrender.com/api/v1
       # Also build-time. Set these or the site ships with the placeholder number, and the
       # WhatsApp button dead-ends on a number nobody owns.
       - key: VITE_CONTACT_PHONE
