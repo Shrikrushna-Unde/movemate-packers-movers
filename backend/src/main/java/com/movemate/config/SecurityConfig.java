@@ -144,8 +144,17 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                         // --- Public reads: the marketing website ---
+                        // HEAD is listed alongside every public GET. Spring Security matches the
+                        // method EXACTLY, so a HEAD request does not match a GET rule - it falls
+                        // through to anyRequest().authenticated() and comes back 401. HEAD is
+                        // semantically "GET without the body", so uptime monitors, link checkers
+                        // and CDN revalidation all use it, and all of them would be rejected.
+                        // The method constraint itself stays: /api/v1/testimonials has a POST
+                        // that must remain authenticated, so a bare path rule would expose it.
                         .requestMatchers(HttpMethod.GET, "/api/v1/catalog/**").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/api/v1/catalog/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/testimonials").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/api/v1/testimonials").permitAll()
 
                         // --- Public writes, each one deliberate ---
                         // Login and registration obviously cannot require a login.
@@ -158,6 +167,7 @@ public class SecurityConfig {
                         // there is no "deny" rule to add and nothing to keep in sync.
                         // Tracking needs reference + phone, which acts as the credential.
                         .requestMatchers(HttpMethod.GET, "/api/v1/bookings/track").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/api/v1/bookings/track").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact").permitAll()
 
                         // --- Admin ---
