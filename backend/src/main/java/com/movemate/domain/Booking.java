@@ -27,9 +27,9 @@ import java.time.LocalDate;
  *       Always mark {@code @ManyToOne} LAZY and fetch deliberately with a JOIN FETCH query
  *       when you need it.</li>
  *   <li><b>Customer details are copied onto the booking</b> rather than read through the user
- *       link. A guest may have no account at all, and even for a logged-in customer the
- *       phone number used for one move must stay attached to that move after they later edit
- *       their profile. This is a snapshot, not a normalisation mistake.</li>
+ *       link. The phone number used for one move must stay attached to THAT move after the
+ *       customer later edits their profile, and the details must survive the account being
+ *       deleted entirely. This is a snapshot, not a normalisation mistake.</li>
  *   <li><b>{@code reference} is the public identifier.</b> Exposing {@code /bookings/1} lets
  *       anyone enumerate your customer base by incrementing the number.</li>
  *   <li><b>{@code estimatedAmount} is stored,</b> not recomputed on read. If the price table
@@ -49,7 +49,9 @@ public class Booking extends Auditable {
     private String reference;
 
     /**
-     * Owning account, or null for a guest booking.
+     * Owning account. Every new booking has one, because the create endpoint is authenticated.
+     * The column is nullable only so that deleting a customer blanks this link rather than
+     * destroying their move history.
      * {@code @JoinColumn(name = "user_id")} names the FK column so Hibernate does not invent
      * one; the FK itself is declared in the migration with ON DELETE SET NULL.
      */

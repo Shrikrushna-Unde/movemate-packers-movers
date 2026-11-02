@@ -41,25 +41,26 @@ public class BookingController {
     }
 
     /**
-     * Creates a booking. Works for both guests and logged-in customers.
+     * Creates a booking for the signed-in customer.
      *
-     * <p>{@code currentUser} is nullable - for an anonymous request the SecurityContext holds
-     * no principal and Spring injects null. That is exactly what makes one endpoint serve both
-     * cases: if a token was supplied, the booking is linked to that account; if not, it is a
-     * guest booking. Note that the account is identified from the VERIFIED token, never from a
-     * user id in the request body.
+     * <p>This endpoint requires authentication. It is deliberately absent from the permitAll
+     * list in {@code SecurityConfig}, so it falls through to {@code anyRequest().authenticated()}
+     * and an anonymous caller is rejected with 401 before this method is ever entered.
+     *
+     * <p>{@code currentUser} is therefore never null here. It also cannot be forged: the
+     * account is taken from the VERIFIED JWT, never from a user id in the request body, which
+     * is what stops one customer filing a booking against another customer's account.
      *
      * <p>201 Created with a {@code Location} header pointing at the tracking URL - the HTTP
      * contract for "I made you a new resource, here is where it lives".
      */
     @PostMapping
-    @Operation(summary = "Create a booking (no account required)")
+    @Operation(summary = "Create a booking (requires a signed-in customer)")
     public ResponseEntity<BookingResponse> create(
             @Valid @RequestBody BookingRequest request,
             @AuthenticationPrincipal AuthenticatedUser currentUser) {
 
-        Long userId = (currentUser == null) ? null : currentUser.getId();
-        BookingResponse created = bookingService.create(request, userId);
+        BookingResponse created = bookingService.create(request, currentUser.getId());
 
         // Builds an absolute URL from the current request, so it is correct behind a proxy on
         // Railway without hardcoding the host anywhere.

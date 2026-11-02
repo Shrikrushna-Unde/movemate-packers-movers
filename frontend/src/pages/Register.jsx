@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Truck, UserPlus } from 'lucide-react';
 
@@ -19,6 +19,14 @@ export default function Register() {
 
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /**
+   * Signing up is now a step inside the booking flow, not just an account page, so honour the
+   * return path the same way Login does. Someone sent here from /quote lands back on the form
+   * they had already filled in instead of on an empty dashboard.
+   */
+  const redirectTo = location.state?.from ?? '/dashboard';
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -50,7 +58,7 @@ export default function Register() {
       void confirmPassword; // referenced so linters do not flag it as unused
       const user = await register(payload);
       toast.success(`Account created. Welcome, ${user.fullName.split(' ')[0]}`);
-      navigate('/dashboard', { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       if (err.fieldErrors) {
         setFieldErrors(err.fieldErrors);
@@ -71,7 +79,7 @@ export default function Register() {
         </span>
         <h1 className="mt-5 text-2xl font-bold text-slate-900">Create your account</h1>
         <p className="mt-2 text-sm text-slate-600">
-          You can book without an account - signing up just keeps your move history and lets you
+          An account is required to confirm a booking. It also keeps your move history and lets you
           leave a review.
         </p>
       </div>

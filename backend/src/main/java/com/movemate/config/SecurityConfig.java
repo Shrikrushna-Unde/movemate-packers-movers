@@ -152,8 +152,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/register").permitAll()
                         // Quotes: forcing a signup before showing a price would kill conversion.
                         .requestMatchers(HttpMethod.POST, "/api/v1/quotes/estimate").permitAll()
-                        // Guest booking: the whole point of the site.
-                        .requestMatchers(HttpMethod.POST, "/api/v1/bookings").permitAll()
+                        // Booking REQUIRES an account. It is not listed here, so it falls
+                        // through to anyRequest().authenticated() below - the deny-by-default
+                        // end of the chain. Deleting a permitAll line is the whole change:
+                        // there is no "deny" rule to add and nothing to keep in sync.
                         // Tracking needs reference + phone, which acts as the credential.
                         .requestMatchers(HttpMethod.GET, "/api/v1/bookings/track").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact").permitAll()

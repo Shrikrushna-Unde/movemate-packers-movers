@@ -177,9 +177,9 @@ The core table. Four points worth rehearsing:
    query also touches `users` even when nobody reads the user — 21 queries for a 20-row admin
    list (the N+1 problem). Always mark `@ManyToOne` lazy and fetch deliberately with
    `JOIN FETCH` when you need it.
-2. **Customer details are copied onto the booking**, not read through the link. A guest has no
-   account; and even for a registered customer, the phone used for one move must stay attached
-   to that move after they edit their profile. A deliberate snapshot.
+2. **Customer details are copied onto the booking**, not read through the link. The phone used
+   for one move must stay attached to that move after the customer edits their profile, and
+   must survive the account being deleted. A deliberate snapshot.
 3. **`reference` is the public id.** `/bookings/1` lets anyone enumerate your customer base.
 4. **`changeStatus` lives on the entity**, not in the service. The object protects its own
    invariant, so no future caller can put it in an illegal state. Same status twice is a no-op,
@@ -662,8 +662,9 @@ a calculator is POST. What matters is that it is idempotent and stores nothing.
 
 ### `BookingController`
 
-- `@AuthenticationPrincipal` is **nullable** here, which is what lets one endpoint serve guests
-  and logged-in customers.
+- `@AuthenticationPrincipal` is non-null here **because of the filter chain**, not because of
+  anything in this class: `POST /bookings` is absent from the permitAll list, so it falls
+  through to `anyRequest().authenticated()` and anonymous callers never reach the method.
 - `ResponseEntity.created(location)` builds the URL from the current request with
   `ServletUriComponentsBuilder`, so it is correct behind Railway's proxy with no hardcoded host.
 - `@Validated` on the class (Spring) is **not** the same as `@Valid` on a parameter (Jakarta):

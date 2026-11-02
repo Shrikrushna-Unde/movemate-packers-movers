@@ -56,7 +56,10 @@ public class BookingService {
      * Creates a booking.
      *
      * @param request the move details
-     * @param userId  the logged-in user's id, or {@code null} for a guest booking
+     * @param userId  the signed-in customer's id, taken from the verified JWT. Required:
+     *                the endpoint is authenticated, so there is always an account behind a
+     *                booking. The {@code user} COLUMN stays nullable, because deleting an
+     *                account must not delete its move history - the FK is ON DELETE SET NULL.
      */
     @Transactional
     public BookingResponse create(BookingRequest request, Long userId) {
@@ -70,14 +73,13 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setReference(referenceGenerator.generate());
 
-        // A guest booking has no user. Looking the user up by id (from the verified JWT) rather
-        // than trusting an id in the request body is what stops one customer attaching a
-        // booking to another customer's account.
-        if (userId != null) {
-            User owner = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
-            booking.setUser(owner);
-        }
+        // Looking the user up by id (from the verified JWT) rather than trusting an id in the
+        // request body is what stops one customer attaching a booking to another customer's
+        // account. The lookup can still fail if the account was deleted while the token was
+        // alive, which is a 404 rather than a crash.
+        User owner = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        booking.setUser(owner);
 
         booking.setCustomerName(request.customerName().trim());
         booking.setCustomerEmail(request.customerEmail().trim().toLowerCase());

@@ -97,7 +97,9 @@ reasoned about without thinking about HTTP.
 
 4. **`BookingController.create`.** `@Valid @RequestBody BookingRequest` triggers Bean
    Validation. A bad phone number stops here with a 400 listing the field — the controller body
-   never runs. `@AuthenticationPrincipal` injects the principal, or `null` for a guest.
+   never runs. `@AuthenticationPrincipal` injects the signed-in customer, which the filter
+   chain guarantees is present - booking is not on the permitAll list, so an anonymous caller
+   is rejected with 401 before the method is entered.
 
 5. **`BookingService.create`** (inside a transaction):
    - calls `quoteService.estimate(request.toQuoteRequest())` — **the price is recalculated
@@ -254,9 +256,9 @@ moving_services        contact_messages
 
 Three decisions to be able to defend:
 
-- **Customer details are copied onto the booking.** A guest has no account, and even for a
-  registered customer the phone number used for one move must stay attached to that move after
-  they later edit their profile. This is a deliberate snapshot, not a normalisation failure.
+- **Customer details are copied onto the booking.** The phone number used for one move must
+  stay attached to that move after the customer edits their profile, and the details must
+  survive the account being deleted. A deliberate snapshot, not a normalisation failure.
 - **`user_id` is nullable with `ON DELETE SET NULL`.** Deleting a user must not delete the
   company's order history.
 - **`estimated_amount` is stored, not recomputed.** If the price table changes next month, the

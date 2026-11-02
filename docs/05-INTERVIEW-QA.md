@@ -376,13 +376,15 @@ A migration that has run is **immutable**. Flyway stores a checksum and refuses 
 file changed. To alter the schema you add `V3__…`.
 
 **63. Why is `bookings.user_id` nullable?**
-Guests can book without an account — which is the whole conversion argument for the site. The FK
-is `ON DELETE SET NULL`, so deleting a user does not delete the company's order history.
+Because the column outlives the account. Booking now requires a signed-in customer, so every
+new row has a user — but the FK is `ON DELETE SET NULL`, so deleting a customer blanks the
+reference instead of destroying the company's order history. The nullability encodes "this
+booking may outlive its owner", not "bookings may be anonymous".
 
 **64. Why are the customer's name, email and phone duplicated on the booking?**
-A deliberate snapshot. A guest has no account at all; and even for a registered customer the
-phone number used for one move must stay attached to that move after they later edit their
-profile. Normalising it away would silently rewrite history.
+A deliberate snapshot. The phone number used for one move must stay attached to THAT move after
+the customer later edits their profile, and the details must survive the account being deleted.
+Normalising it away would silently rewrite history.
 
 **65. Why store `estimated_amount` instead of recomputing it?**
 Because if the price table changes next month, the customer must still see the figure they

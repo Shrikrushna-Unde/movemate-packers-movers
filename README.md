@@ -14,7 +14,7 @@ model — the two things that are actually hard about this business domain.
 - Instant itemised quote — base charge, distance beyond the free 25 km, packing, staircase
   access, transit insurance, warehousing and GST, each as its own line with a plain-language
   explanation of how it was calculated
-- Book a move **without creating an account**, and get a human-readable reference (`MM-2026-4F7K2Q`)
+- Book a move once signed in, and get a human-readable reference (`MM-2026-4F7K2Q`)
 - Track a booking with the reference plus the phone number on it
 - Browse services, read moderated customer reviews, send an enquiry
 
@@ -198,7 +198,7 @@ Base path `/api/v1`. Full interactive docs at `/swagger-ui.html`.
 | `GET` | `/catalog/services/{slug}` | One service |
 | `GET` | `/catalog/options` | Dropdown options generated from the Java enums |
 | `POST` | `/quotes/estimate` | Itemised price estimate |
-| `POST` | `/bookings` | Create a booking (guest or logged in) |
+| `POST` | `/bookings` | Create a booking (**requires sign-in**) |
 | `GET` | `/bookings/track?reference=&phone=` | Track a booking |
 | `GET` | `/testimonials` | Approved reviews |
 | `POST` | `/contact` | Send an enquiry |

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { CheckCircle2, Copy, Search } from 'lucide-react';
 
@@ -60,6 +60,7 @@ const EMPTY_FORM = {
 
 export default function GetQuote() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [quote, setQuote] = useState(null);
@@ -201,6 +202,15 @@ export default function GetQuote() {
   const handleSubmit = async (event) => {
     // Without this, the browser does a full page reload on submit and all React state is lost.
     event.preventDefault();
+
+    // Hiding the submit button does not prevent submission: pressing Enter in any text input
+    // still fires onSubmit. Without this guard a signed-out visitor would fire the request and
+    // get a bare 401 toast instead of being taken somewhere useful.
+    if (!user) {
+      navigate('/login', { state: { from: '/quote' } });
+      return;
+    }
+
     setSubmitting(true);
     setFieldErrors({});
 
@@ -315,7 +325,7 @@ export default function GetQuote() {
         align="left"
         eyebrow="Instant quote"
         title="Tell us about your move"
-        subtitle="The estimate on the right updates as you type. Nothing is booked until you submit the form, and you do not need an account."
+        subtitle="The estimate on the right updates as you type. Pricing is open to everyone - you only need an account at the point of confirming the booking."
       />
 
       {/*
@@ -579,19 +589,56 @@ export default function GetQuote() {
               />
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-500">
-                By submitting you agree to be contacted about this move. No payment is taken now.
-              </p>
-              {/*
-                type="submit" is explicit because our Button defaults to type="button".
-                `loading` disables it, which is what prevents a double booking from an
-                impatient second click.
-              */}
-              <Button type="submit" variant="accent" size="lg" loading={submitting}>
-                {submitting ? 'Confirming...' : 'Confirm my booking'}
-              </Button>
-            </div>
+            {/*
+              Booking requires an account, so a signed-out visitor gets a sign-in prompt in
+              place of the submit button rather than a button that fails with a 401. The quote
+              above stays visible and fully usable - the price is the reason they came, and
+              demanding a login before showing it would lose them.
+
+              `state: { from: '/quote' }` is the same mechanism ProtectedRoute uses, so Login
+              returns them here afterwards with the form still filled in.
+            */}
+            {!user ? (
+              <div className="mt-6 rounded-xl border border-brand-100 bg-brand-50/60 p-5">
+                <p className="text-sm font-semibold text-slate-800">
+                  Sign in to confirm this booking
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  We need an account on the booking so you can track it, see its status and keep
+                  your move history. Your estimate above is saved while you sign in.
+                </p>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    variant="accent"
+                    onClick={() => navigate('/login', { state: { from: '/quote' } })}
+                  >
+                    Sign in to continue
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/register', { state: { from: '/quote' } })}
+                  >
+                    Create an account
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-slate-500">
+                  By submitting you agree to be contacted about this move. No payment is taken now.
+                </p>
+                {/*
+                  type="submit" is explicit because our Button defaults to type="button".
+                  `loading` disables it, which is what prevents a double booking from an
+                  impatient second click.
+                */}
+                <Button type="submit" variant="accent" size="lg" loading={submitting}>
+                  {submitting ? 'Confirming...' : 'Confirm my booking'}
+                </Button>
+              </div>
+            )}
           </Card>
         </form>
 

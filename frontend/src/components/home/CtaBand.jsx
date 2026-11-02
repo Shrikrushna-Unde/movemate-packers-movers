@@ -20,7 +20,7 @@ export default function CtaBand() {
           Get your itemised moving quote in under a minute
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-slate-300">
-          No account needed, no obligation, and no sales call unless you ask for one. The price
+          See your price before you sign up, with no obligation and no sales call unless you ask. The price
           breakdown is yours to compare.
         </p>
 

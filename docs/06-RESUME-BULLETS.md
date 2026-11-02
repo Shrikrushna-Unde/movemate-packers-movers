@@ -22,8 +22,8 @@ Use this shape. Swap in your real URLs.
 >   rejected by the entity itself and the API returns the legal next states, so the admin UI
 >   cannot offer an invalid action.
 > - Secured a **stateless REST API** with JWT authentication, BCrypt password hashing,
->   role-based authorisation and a deny-by-default filter chain; guest booking, customer and
->   admin access are three distinct authorisation paths.
+>   role-based authorisation and a deny-by-default filter chain; public pricing, authenticated
+>   booking and admin access are three distinct authorisation paths.
 > - Managed the MySQL schema with **Flyway migrations** (`ddl-auto=none`), with `DECIMAL` money
 >   columns, FK `ON DELETE SET NULL` to preserve order history, and indexes chosen from the
 >   queries actually run.
