@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 /**
  * Creates the bootstrap accounts and, when necessary, the reference data.
@@ -76,14 +77,42 @@ public class DataSeeder implements CommandLineRunner {
         seedTestimonials();
     }
 
+    /**
+     * Creates the admin account, or re-syncs its password when the configured one has changed.
+     *
+     * <p>The re-sync is the important half. An earlier version simply returned when the account
+     * already existed, which made {@code ADMIN_PASSWORD} a write-once variable: it was honoured
+     * at creation and silently ignored on every boot afterwards. Change it in the hosting
+     * dashboard, redeploy, and you are locked out of your own admin panel - with a perfectly
+     * green deploy and nothing in the logs to say why.
+     *
+     * <p>Reconciling instead makes the environment variable authoritative, which is what its
+     * name promises. That is safe here precisely because this application has no self-service
+     * change-password screen: configuration is the only source of truth for this account, so
+     * there is no user-chosen password for it to overwrite. Were that to change, this method
+     * would have to change with it.
+     */
     private void seedAdmin() {
-        if (userRepository.existsByEmail(adminProperties.email())) {
-            log.info("Admin account already present, skipping seed");
+        String email = adminProperties.email();
+
+        Optional<User> existing = userRepository.findByEmail(email);
+        if (existing.isPresent()) {
+            User admin = existing.get();
+
+            // matches() hashes the candidate with the stored salt and compares - never compare
+            // an encoded password with equals(), because BCrypt generates a fresh salt each
+            // time and two hashes of the same password are never byte-identical.
+            if (!passwordEncoder.matches(adminProperties.password(), admin.getPasswordHash())) {
+                admin.setPasswordHash(passwordEncoder.encode(adminProperties.password()));
+                userRepository.save(admin);
+                log.info("Admin password re-synced from configuration for {}", email);
+            }
             return;
         }
+
         User admin = new User(
                 adminProperties.fullName(),
-                adminProperties.email(),
+                email,
                 "8999115935",
                 // The one place plaintext touches the app, and it is hashed on the same line.
                 passwordEncoder.encode(adminProperties.password()),
@@ -92,7 +121,7 @@ public class DataSeeder implements CommandLineRunner {
 
         // Log the email, never the password. Platform logs are visible to anyone with
         // dashboard access and are retained long after you have forgotten this line exists.
-        log.info("Seeded admin account: {}", adminProperties.email());
+        log.info("Seeded admin account: {}", email);
     }
 
     private void seedDemoCustomer() {

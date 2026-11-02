@@ -54,6 +54,12 @@ model — the two things that are actually hard about this business domain.
 > signing up. The **admin** password is NOT `Admin@123` on the live site - it is overridden
 > there via the `ADMIN_PASSWORD` environment variable, which is the whole point of reading it
 > from config rather than hardcoding it.
+>
+> `ADMIN_PASSWORD` is re-applied on every startup, not just the first one. `DataSeeder`
+> compares the configured password against the stored hash and updates it when they differ, so
+> rotating the variable and redeploying actually changes the password. An earlier version
+> skipped the account entirely once it existed, which quietly made the variable write-once -
+> you could change it, get a green deploy, and be locked out with nothing in the logs.
 
 
 ---
