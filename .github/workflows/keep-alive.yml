@@ -1,0 +1,65 @@
+# ===================================================================
+#  Keeps the Render free-tier API from going to sleep.
+#
+#  Render spins a free web service down after 15 minutes with no
+#  traffic. Waking it takes three to four minutes, because a 512 MB
+#  container has to start a JVM, a Spring context and a connection
+#  pool. A visitor who clicks the link cold sees a page that never
+#  finishes loading, and leaves.
+#
+#  This workflow calls the health endpoint often enough that the idle
+#  timer never reaches 15 minutes, so the container stays warm and
+#  responds in well under a second.
+# ===================================================================
+name: Keep the API warm
+
+on:
+  # Every 5 minutes, not every 10. GitHub's scheduler is best-effort and
+  # routinely runs late under load; at a 10-minute interval a single
+  # delayed run pushes past Render's 15-minute idle window and the
+  # container sleeps anyway. 5 minutes buys enough slack to absorb that.
+  schedule:
+    - cron: '*/5 * * * *'
+  # Lets you run it by hand from the Actions tab, which is how you wake
+  # the site deliberately before sending the link to someone.
+  workflow_dispatch:
+
+# The default GITHUB_TOKEN gets write access to a lot. This job only
+# makes an outbound HTTP call, so take everything away.
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    # If a run overlaps a slow cold start, do not pile more on top.
+    concurrency:
+      group: keep-alive
+      cancel-in-progress: false
+    steps:
+      - name: Ping the health endpoint
+        run: |
+          URL="https://movemate-api-y3s9.onrender.com/actuator/health"
+
+          # --max-time 300: when the container IS asleep this request is
+          # what wakes it, and it must stay connected for the whole boot.
+          # A short timeout would hang up early, leaving the service to
+          # finish starting and then idle straight back to sleep - the
+          # ping would appear to run while never actually helping.
+          start=$(date +%s)
+          code=$(curl -s -S -o /tmp/health.json -w '%{http_code}' --max-time 300 "$URL" || echo "000")
+          elapsed=$(( $(date +%s) - start ))
+
+          echo "HTTP $code in ${elapsed}s"
+          echo "body: $(cat /tmp/health.json 2>/dev/null)"
+
+          if [ "$code" != "200" ]; then
+            echo "::error::Health check returned $code after ${elapsed}s"
+            exit 1
+          fi
+
+          # Surface a slow response as a warning rather than a failure:
+          # it means the container had gone to sleep, so the schedule is
+          # not keeping up and the interval may need tightening.
+          if [ "$elapsed" -gt 30 ]; then
+            echo "::warning::Took ${elapsed}s - the service had gone cold, so a scheduled run was missed or delayed."
+          fi
